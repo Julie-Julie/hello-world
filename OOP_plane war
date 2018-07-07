@@ -1,0 +1,135 @@
+# -*- coding: utf-8 -*-
+import pygame
+from pygame.locals import *
+import random
+
+
+class Base(object):
+    def __init__(self, screen, x, y, image):
+        self.screen = screen
+        self.x = x
+        self.y = y
+        self.image = image
+
+
+class PlaneBase(Base):
+    def __init__(self, screen, x, y, image):
+        Base.__init__(self, screen, x, y, image)
+        self.bullet_list = []
+
+    def display(self):
+        self.screen.blit(self.image, (self.x, self.y))
+        for i in self.bullet_list:
+            i.display()
+            i.move()
+            if i.judge():
+                self.bullet_list.remove(i)
+
+
+class BulletBase(Base):
+    def __init__(self, screen, x, y, image):
+        Base.__init__(self, screen, x, y, image)
+
+    def display(self):
+        self.screen.blit(self.image, (self.x, self.y))
+
+
+class HeroPlane(PlaneBase):
+    def __init__(self, screen):
+        PlaneBase.__init__(self, screen, 190, 650, pygame.image.load('./plane war/plane_images/hero1.png'))
+
+    def move_left(self):
+        self.x -= 5
+
+    def move_right(self):
+        self.x += 5
+
+    def fire(self):
+        bullet = HeroBullet(self.screen, self.x, self.y)
+        self.bullet_list.append(bullet)
+
+
+class EnemyPlane(PlaneBase):
+    def __init__(self, screen):
+        PlaneBase.__init__(self, screen, 190, 5, pygame.image.load('./plane war/plane_images/enemy0.png'))
+        self.direction = 'right'
+
+    def move(self):
+        if self.direction == 'right':
+            self.x += 2
+        elif self.direction == 'left':
+            self.x -= 2
+
+        if self.x > 480-39:
+            self.direction = 'left'
+        elif self.x < 0:
+            self.direction = 'right'
+
+    def fire(self):
+        num = random.randint(0, 100)
+        if num == 99 or num == 66:
+            bullet = EnemyBullet(self.screen, self.x, self.y)
+            self.bullet_list.append(bullet)
+
+
+class EnemyBullet(BulletBase):
+    def __init__(self, screen, x, y):
+        BulletBase.__init__(self, screen, x+21, y+21, pygame.image.load('./plane war/plane_images/bullet1.png'))
+
+    def move(self):
+        self.y += 2
+
+    def judge(self):
+        if self.y > 750-21:
+            return True
+
+
+class HeroBullet(BulletBase):
+    def __init__(self, screen, x, y):
+        BulletBase.__init__(self, screen, x+39, y-51, pygame.image.load('./plane war/plane_images/bullet.png'))
+
+    def move(self):
+        self.y -= 2
+
+    def judge(self):
+        if self.y < 10:
+            return True
+        else:
+            return False
+
+
+def key_control(hero):
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            print('exit')
+            exit()
+        elif event.type == KEYDOWN:
+            if event.key == K_a or event.key == K_LEFT:
+                print('left')
+                hero.move_left()
+            elif event.key == K_d or event.key == K_RIGHT:
+                print('right')
+                hero.move_right()
+            elif event.key == K_SPACE:
+                print('space')
+                hero.fire()
+
+
+def main():
+    screen = pygame.display.set_mode((480,752),0,32)
+    background = pygame.image.load('./plane war/plane_images/background.png')
+    hero = HeroPlane(screen)
+    enemy = EnemyPlane(screen)
+
+    while True:
+        screen.blit(background, (0,0))
+        hero.display()
+        key_control(hero)
+        enemy.display()
+        enemy.move()
+        enemy.fire()
+        pygame.display.update()
+
+
+if __name__ == '__main__':
+    main()
